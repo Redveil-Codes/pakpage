@@ -41,20 +41,6 @@ header {
 	transform: rotate(-4deg) scale(1.05);
 }
 
-nav {
-	display: flex;
-	gap: 1.1rem;
-}
-
-nav a {
-	color: var(--text-dim);
-	font-size: 0.9rem;
-}
-
-nav a:hover {
-	color: var(--accent);
-}
-
 main {
 	flex: 1;
 }

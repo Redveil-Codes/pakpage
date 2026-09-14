@@ -1,3 +1,10 @@
+.back {
+	display: inline-block;
+	color: var(--text-dim);
+	font-size: 0.85rem;
+	margin-bottom: 1.5rem;
+}
+
 .intro {
 	margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
 }
@@ -10,41 +17,4 @@
 .intro p {
 	color: var(--text-dim);
 	max-width: 60ch;
-}
-
-.pager {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 1rem;
-	margin-top: 1.75rem;
-}
-
-.pager button {
-	font-family: inherit;
-	font-size: 0.85rem;
-	color: var(--text-dim);
-	background: var(--bg-raised);
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	padding: 0.35rem 0.7rem;
-	cursor: pointer;
-	transition:
-		border-color 0.15s var(--ease),
-		color 0.15s var(--ease);
-}
-
-.pager button:hover:not(:disabled) {
-	border-color: var(--accent-dim);
-	color: var(--accent);
-}
-
-.pager button:disabled {
-	opacity: 0.35;
-	cursor: default;
-}
-
-.pager .pos {
-	color: var(--text-dimmer);
-	font-size: 0.8rem;
 }
