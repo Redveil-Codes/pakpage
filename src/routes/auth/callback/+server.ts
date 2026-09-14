@@ -25,5 +25,5 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	const redirectTo = cookies.get('oauth_redirect') ?? '/submit';
 	cookies.delete('oauth_redirect', { path: '/' });
-	redirect(302, redirectTo);
+	redirect(302, url.origin + redirectTo);
 };
