@@ -2,7 +2,6 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
-	import '../app.css';
 
 	let { children } = $props();
 </script>
@@ -26,9 +25,10 @@
 				/>
 				<rect x="17" y="19" width="8" height="3" rx="1.5" fill="var(--accent)" />
 			</svg>
-			Pak<span class="accent">Page</span>
+			<span class="wordmark">Pak<span class="accent">Page</span></span>
 		</a>
 		<nav>
+			<a href="/contributors">contributors</a>
 			<a href="https://github.com/Redveil-Codes/pakar" target="_blank" rel="noreferrer">source</a>
 		</nav>
 	</header>
@@ -88,6 +88,11 @@
 
 	.brand:hover .logo {
 		transform: rotate(-4deg) scale(1.05);
+	}
+
+	nav {
+		display: flex;
+		gap: 1.1rem;
 	}
 
 	nav a {

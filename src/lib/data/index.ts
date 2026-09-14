@@ -1,9 +1,11 @@
 import rawData from './packages.json';
-import type { Package, Repo } from '$lib/types';
+import rawContributors from './contributors.json';
+import type { Contributor, Package, Repo } from '$lib/types';
 
 export const packages = rawData.packages as Package[];
 export const generatedAt = rawData.generatedAt as string;
 export const repo = rawData.repo as Repo;
+export const contributors = rawContributors.contributors as Contributor[];
 
 export function getPackageBySlug(slug: string): Package | undefined {
 	return packages.find((p) => p.slug === slug);

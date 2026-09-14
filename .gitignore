@@ -8,9 +8,10 @@ node_modules
 /.svelte-kit
 /build
 
-# synced from pakar, regenerate with `pnpm run sync-data`
+# synced, regenerate with `pnpm run sync`
 /.cache
 /src/lib/data/packages.json
+/src/lib/data/contributors.json
 
 # OS
 .DS_Store

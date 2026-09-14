@@ -38,3 +38,12 @@ export interface Repo {
 	httpsUrl: string;
 	cloneUrl: string;
 }
+
+export interface Contributor {
+	slug: string;
+	username: string;
+	name: string;
+	avatarUrl: string;
+	githubUrl: string;
+	bioHtml: string;
+}
