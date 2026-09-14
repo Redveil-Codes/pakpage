@@ -3,6 +3,15 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const PAGE_SIZE = 15;
+
+	let page = $state(1);
+	let totalPages = $derived(Math.max(1, Math.ceil(data.contributors.length / PAGE_SIZE)));
+	let pageClamped = $derived(Math.min(page, totalPages));
+	let pageItems = $derived(
+		data.contributors.slice((pageClamped - 1) * PAGE_SIZE, pageClamped * PAGE_SIZE)
+	);
 </script>
 
 <svelte:head>
@@ -16,7 +25,7 @@
 </section>
 
 <ul class="contrib-grid">
-	{#each data.contributors as c, i (c.slug)}
+	{#each pageItems as c, i (c.slug)}
 		<li class="contrib-card" in:fly={{ y: 6, duration: 180, delay: Math.min(i * 25, 180) }}>
 			<a class="contrib-link" href={c.githubUrl} target="_blank" rel="noreferrer" aria-label={c.name}
 			></a>
@@ -35,3 +44,13 @@
 		<li class="empty">no contributors yet</li>
 	{/each}
 </ul>
+
+{#if totalPages > 1}
+	<div class="pager">
+		<button disabled={pageClamped <= 1} onclick={() => (page = pageClamped - 1)}>&larr; prev</button>
+		<span class="pos">page {pageClamped} / {totalPages}</span>
+		<button disabled={pageClamped >= totalPages} onclick={() => (page = pageClamped + 1)}
+			>next &rarr;</button
+		>
+	</div>
+{/if}
