@@ -7,9 +7,10 @@ PakPage
 ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat&logo=pnpm&logoColor=white)
 ![Netlify](https://img.shields.io/badge/Netlify-00C7B7?style=flat&logo=netlify&logoColor=white)
 
-Web front for [Pak](https://pak.dpdns.org/pak/pakar), a build-from-source package manager.
-Nothing here is baked in at build time — package data is fetched live from the self-hosted
-Forgejo instance on every request, so the site never needs a rebuild to pick up changes.
+Web front for [Pak](https://pak.dpdns.org/pak/pakar), a build-from-source package manager. Live at
+[web.pak.dpdns.org](https://web.pak.dpdns.org/). Nothing here is baked in at build time — package
+data is fetched live from the self-hosted Forgejo instance on every request, so the site never
+needs a rebuild to pick up changes.
 
 ```sh
 pnpm install

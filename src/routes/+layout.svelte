@@ -68,8 +68,12 @@
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
 					<DropdownMenu.Item href="/">home</DropdownMenu.Item>
+					<DropdownMenu.Item href="/submit">submit a package</DropdownMenu.Item>
 					<DropdownMenu.Item href="/contributors">contributors</DropdownMenu.Item>
 					<DropdownMenu.Item href="https://pak.dpdns.org/pak/pakar" target="_blank" rel="noreferrer"
+						>mirror</DropdownMenu.Item
+					>
+					<DropdownMenu.Item href="https://github.com/Redveil-Codes/pakpage" target="_blank" rel="noreferrer"
 						>source</DropdownMenu.Item
 					>
 				</DropdownMenu.Content>
