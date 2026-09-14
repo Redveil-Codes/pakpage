@@ -7,17 +7,18 @@ PakPage
 ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat&logo=pnpm&logoColor=white)
 ![Netlify](https://img.shields.io/badge/Netlify-00C7B7?style=flat&logo=netlify&logoColor=white)
 
-Web front for [Pak](https://github.com/Redveil-Codes/pakar), a build-from-source package manager.
-Nothing here is baked in at build time — package data and contributor bios are fetched live from
-GitHub on every request, so the site never needs a rebuild to pick up changes.
+Web front for [Pak](https://pak.dpdns.org/pak/pakar), a build-from-source package manager.
+Nothing here is baked in at build time — package data is fetched live from the self-hosted
+Forgejo instance on every request, so the site never needs a rebuild to pick up changes.
 
 ```sh
 pnpm install
 pnpm run dev
 ```
 
-Needs `PAKAR_GITHUB_TOKEN` in a `.env` file — a fine-grained GitHub PAT, read-only, scoped to the
-pakar repo. Without it the site still boots, it just can't fetch anything.
+Package data comes from the public `pak/pakar` repo on `pak.dpdns.org`, no token required by
+default. Set `PAKAR_FORGEJO_TOKEN` in a `.env` file only if you need higher API rate limits or the
+repo goes private again.
 
 `pnpm run check` for types, `pnpm run test` for the unit tests, `pnpm run build` before shipping.
 
