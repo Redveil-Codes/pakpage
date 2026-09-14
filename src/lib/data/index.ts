@@ -1,9 +1,9 @@
-import raw from './packages.json';
+import rawData from './packages.json';
 import type { Package, Repo } from '$lib/types';
 
-export const packages = raw.packages as Package[];
-export const generatedAt = raw.generatedAt as string;
-export const repo = raw.repo as Repo;
+export const packages = rawData.packages as Package[];
+export const generatedAt = rawData.generatedAt as string;
+export const repo = rawData.repo as Repo;
 
 export function getPackageBySlug(slug: string): Package | undefined {
 	return packages.find((p) => p.slug === slug);
@@ -28,24 +28,38 @@ const FIELD_FILTERS: Record<string, (p: Package, val: string) => boolean> = {
 	maintainer: (p, val) => (p.maintainer ?? '').toLowerCase().includes(val)
 };
 
-export function searchPackages(query: string): Package[] {
-	const raw = query.trim();
-	if (!raw) return packages;
-
-	const prefixed = raw.match(/^(\w+):(.*)$/);
+function tokenScore(p: Package, token: string): number | null {
+	const prefixed = token.match(/^(\w+):(.*)$/);
 	if (prefixed) {
-		const [, key, rest] = prefixed;
-		const filter = FIELD_FILTERS[key.toLowerCase()];
+		const filter = FIELD_FILTERS[prefixed[1].toLowerCase()];
 		if (filter) {
-			const val = rest.trim().toLowerCase();
-			return val ? packages.filter((p) => filter(p, val)) : packages;
+			const val = prefixed[2].trim().toLowerCase();
+			if (!val) return 0;
+			return filter(p, val) ? 50 : null;
 		}
 	}
+	const s = score(p, token.toLowerCase());
+	return s > 0 ? s : null;
+}
 
-	const q = raw.toLowerCase();
-	return packages
-		.map((p) => ({ p, s: score(p, q) }))
-		.filter(({ s }) => s > 0)
-		.sort((a, b) => b.s - a.s || a.p.name.localeCompare(b.p.name))
-		.map(({ p }) => p);
+export function searchPackages(query: string): Package[] {
+	const tokens = query.trim().split(/\s+/).filter(Boolean);
+	if (!tokens.length) return packages;
+
+	const matches: { p: Package; s: number }[] = [];
+	for (const p of packages) {
+		let total = 0;
+		let ok = true;
+		for (const token of tokens) {
+			const s = tokenScore(p, token);
+			if (s === null) {
+				ok = false;
+				break;
+			}
+			total += s;
+		}
+		if (ok) matches.push({ p, s: total });
+	}
+
+	return matches.sort((a, b) => b.s - a.s || a.p.name.localeCompare(b.p.name)).map(({ p }) => p);
 }

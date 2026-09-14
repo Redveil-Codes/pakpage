@@ -238,6 +238,7 @@ BUILD_SCRIPT=(
 	.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+		align-items: start;
 		gap: 1rem;
 		margin-bottom: 2rem;
 	}

@@ -19,8 +19,10 @@
 		history.replaceState(history.state, '', url);
 	}
 
-	function setFilter(value: string) {
-		query = value;
+	function addFilter(token: string) {
+		const tokens = query.trim().split(/\s+/).filter(Boolean);
+		if (!tokens.includes(token)) tokens.push(token);
+		query = tokens.join(' ');
 		onInput();
 		inputEl.focus();
 		openDepsFor = null;
@@ -53,7 +55,7 @@
 
 	function pickDep(e: MouseEvent, dep: string) {
 		e.stopPropagation();
-		setFilter(`d:${dep}`);
+		addFilter(`d:${dep}`);
 	}
 </script>
 
@@ -109,10 +111,10 @@ pak = = show installed packages</pre>
 				<p>{pkg.description}</p>
 				<div class="tags">
 					{#if pkg.license}
-						<button class="tag" onclick={() => setFilter(`l:${pkg.license}`)}>{pkg.license}</button>
+						<button class="tag" onclick={() => addFilter(`l:${pkg.license}`)}>{pkg.license}</button>
 					{/if}
 					{#if pkg.dependencies.length === 1}
-						<button class="tag" onclick={() => setFilter(`d:${pkg.dependencies[0]}`)}
+						<button class="tag" onclick={() => addFilter(`d:${pkg.dependencies[0]}`)}
 							>{pkg.dependencies[0]}</button
 						>
 					{:else if pkg.dependencies.length > 1}
