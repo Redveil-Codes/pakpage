@@ -3,7 +3,7 @@ import { env } from '$env/dynamic/private';
 const CLIENT_ID = env.FORGEJO_OAUTH_CLIENT_ID;
 const CLIENT_SECRET = env.FORGEJO_OAUTH_CLIENT_SECRET;
 const BASE = env.PAKAR_FORGEJO_BASE ?? 'https://pak.dpdns.org';
-const SCOPE = 'write:repository';
+const SCOPE = 'read:user write:repository';
 
 export interface TokenResponse {
 	access_token: string;
