@@ -1,13 +1,29 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
+	import { tick } from 'svelte';
 	import type { PageProps } from './$types';
 	import { getPackageBySlug } from '$lib/search';
+	import { Button } from '$lib/components/ui/button';
+	import * as Tabs from '$lib/components/ui/tabs';
+	import * as ScrollArea from '$lib/components/ui/scroll-area';
 
 	let { data }: PageProps = $props();
 	let pkg = $derived(data.pkg);
 	let repo = $derived(data.repo);
 
 	let copied = $state(false);
+	let activeFile = $state('package.yml');
+
+	const MAX_BODY_HEIGHT = 420;
+	let bodyHeight = $state(MAX_BODY_HEIGHT);
+	let measureEl = $state<HTMLDivElement>();
+
+	$effect(() => {
+		activeFile;
+		tick().then(() => {
+			if (measureEl) bodyHeight = Math.min(measureEl.scrollHeight, MAX_BODY_HEIGHT);
+		});
+	});
 
 	function fmtDate(iso: string) {
 		return new Date(iso).toLocaleDateString(undefined, {
@@ -23,13 +39,16 @@
 		setTimeout(() => (copied = false), 1200);
 	}
 
-	let blobBase = $derived(`${repo.httpsUrl}/blob/main/packages/${pkg.dir}`);
-	let commitsUrl = $derived(`${repo.httpsUrl}/commits/main/packages/${pkg.dir}`);
-	let snapshotUrl = $derived(`${repo.httpsUrl}/archive/refs/heads/main.zip`);
+	let githubUrl = $derived(`${repo.httpsUrl}/tree/main/packages/${pkg.dir}`);
 </script>
 
 <svelte:head>
 	<title>{pkg.name} — PakPage</title>
+	<meta name="description" content={pkg.description} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="{pkg.name} — PakPage" />
+	<meta property="og:description" content={pkg.description} />
+	<meta name="twitter:card" content="summary" />
 	<link rel="stylesheet" href="/css/package.css" />
 </svelte:head>
 
@@ -44,128 +63,98 @@
 		<span class="copy-flag" class:copied>{copied ? 'copied' : 'copy'}</span>
 	</button>
 
-	<div class="grid">
-		<section class="panel" in:fly={{ y: 8, duration: 220, delay: 40 }}>
-			<h2>details</h2>
-			<dl>
-				{#if pkg.homepage}
-					<dt>upstream url</dt>
-					<dd><a href={pkg.homepage} target="_blank" rel="noreferrer">{pkg.homepage}</a></dd>
+	<section class="panel" in:fly={{ y: 8, duration: 220, delay: 40 }}>
+		<h2>details</h2>
+		<dl>
+			{#if pkg.homepage}
+				<dt>upstream url</dt>
+				<dd><a href={pkg.homepage} target="_blank" rel="noreferrer">{pkg.homepage}</a></dd>
+			{/if}
+			{#if pkg.license}
+				<dt>license</dt>
+				<dd><a href="/?q=l:{pkg.license}">{pkg.license}</a></dd>
+			{/if}
+			<dt>dependencies</dt>
+			<dd>
+				{#if pkg.dependencies.length}
+					{#each pkg.dependencies as dep, i (dep)}
+						{#if i > 0},&nbsp;{/if}{#if getPackageBySlug(data.packages, dep)}<a href="/p/{dep}"
+								>{dep}</a
+							>{:else}{dep}{/if}
+					{/each}
+				{:else}
+					none
 				{/if}
-				{#if pkg.license}
-					<dt>license</dt>
-					<dd><a href="/?q=l:{pkg.license}">{pkg.license}</a></dd>
-				{/if}
-				<dt>dependencies</dt>
+			</dd>
+			{#if pkg.maintainer}
+				<dt>maintainer</dt>
+				<dd><a href="/?q=m:{pkg.maintainer}">{pkg.maintainer}</a></dd>
+			{/if}
+			{#if pkg.firstCommit}
+				<dt>submitter</dt>
+				<dd>{pkg.firstCommit.authorName}</dd>
+				<dt>first submitted</dt>
+				<dd>{fmtDate(pkg.firstCommit.date)}</dd>
+			{/if}
+			{#if pkg.lastCommit}
+				<dt>last packager</dt>
+				<dd>{pkg.lastCommit.authorName}</dd>
+				<dt>last updated</dt>
 				<dd>
-					{#if pkg.dependencies.length}
-						{#each pkg.dependencies as dep, i (dep)}
-							{#if i > 0},&nbsp;{/if}{#if getPackageBySlug(data.packages, dep)}<a href="/p/{dep}"
-									>{dep}</a
-								>{:else}{dep}{/if}
-						{/each}
-					{:else}
-						none
-					{/if}
+					{fmtDate(pkg.lastCommit.date)}
+					<span class="msg">— {pkg.lastCommit.message}</span>
 				</dd>
-				{#if pkg.maintainer}
-					<dt>maintainer</dt>
-					<dd><a href="/?q=m:{pkg.maintainer}">{pkg.maintainer}</a></dd>
-				{/if}
-				{#if pkg.firstCommit}
-					<dt>submitter</dt>
-					<dd>{pkg.firstCommit.authorName}</dd>
-					<dt>first submitted</dt>
-					<dd>{fmtDate(pkg.firstCommit.date)}</dd>
-				{/if}
-				{#if pkg.lastCommit}
-					<dt>last packager</dt>
-					<dd>{pkg.lastCommit.authorName}</dd>
-					<dt>last updated</dt>
-					<dd>
-						{fmtDate(pkg.lastCommit.date)}
-						<span class="msg">— {pkg.lastCommit.message}</span>
-					</dd>
-				{/if}
-			</dl>
-		</section>
+			{/if}
+		</dl>
+	</section>
 
-		<section class="panel" in:fly={{ y: 8, duration: 220, delay: 80 }}>
-			<h2>package actions</h2>
-			<ul class="actions">
-				<li>
-					<a href="{blobBase}/package.yml" target="_blank" rel="noreferrer">
-						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-							><path
-								d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linejoin="round"
-							/><path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg
-						>
-						view package.yml
-					</a>
-				</li>
-				<li>
-					<a href="{blobBase}/package.pak" target="_blank" rel="noreferrer">
-						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-							><path
-								d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linejoin="round"
-							/><path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg
-						>
-						view package.pak
-					</a>
-				</li>
-				<li>
-					<a href={commitsUrl} target="_blank" rel="noreferrer">
-						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-							><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" /><path
-								d="M12 8v4l3 2"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-							/></svg
-						>
-						view changes
-					</a>
-				</li>
-				<li>
-					<a href={snapshotUrl} target="_blank" rel="noreferrer">
-						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-							><path
-								d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							/></svg
-						>
-						download repo snapshot (.zip)
-					</a>
-				</li>
-			</ul>
-		</section>
-	</div>
-
-	{#if pkg.pak}
-		<div class="term">
-			<div class="term-bar"><span class="d red"></span><span class="d yellow"></span><span
-					class="d green"
-				></span><span class="term-title">package.pak</span></div>
-			<pre>{#if pkg.pak.CC}CC={pkg.pak.CC}
-{/if}SRC={pkg.pak.SRC}
-DEPENDENCIES={Array.isArray(pkg.pak.DEPENDENCIES) ? pkg.pak.DEPENDENCIES.join(' ') : pkg.pak.DEPENDENCIES}
-BUILDDIR={pkg.pak.BUILDDIR}
-BIN={pkg.pak.BIN}
-LIB={pkg.pak.LIB}
-INSTALL_BIN={pkg.pak.INSTALL_BIN}
-INSTALL_LIB={pkg.pak.INSTALL_LIB}
-BUILD_SCRIPT=(
-{#each pkg.pak.BUILD_SCRIPT ?? [] as line}    {line}
-{/each})</pre>
-		</div>
+	{#if pkg.pakRaw}
+		<Tabs.Root bind:value={activeFile}>
+			<div class="term" in:fly={{ y: 8, duration: 220, delay: 80 }}>
+				<div class="term-bar">
+					<span class="d red"></span><span class="d yellow"></span><span class="d green"></span>
+					<Tabs.List class="term-tab-list">
+						<Tabs.Trigger value="package.yml" class="term-tab-trigger">package.yml</Tabs.Trigger>
+						<Tabs.Trigger value="package.pak" class="term-tab-trigger">package.pak</Tabs.Trigger>
+						<Tabs.Trigger value="history" class="term-tab-trigger">history</Tabs.Trigger>
+					</Tabs.List>
+					<Button href={githubUrl} target="_blank" rel="noreferrer" variant="ghost" size="sm" class="term-github">
+						<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+							<path
+								d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.5 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.38-3.37-1.38-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.63.07-.63 1 .07 1.53 1.05 1.53 1.05.89 1.57 2.34 1.11 2.91.85.09-.67.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 2.5-.35c.85 0 1.7.12 2.5.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.96.68 1.94 0 1.4-.01 2.53-.01 2.87 0 .28.18.6.69.5A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"
+							/>
+						</svg>
+						View on GitHub
+					</Button>
+				</div>
+				<div class="term-body" style="height: {bodyHeight}px">
+					<ScrollArea.Root class="h-full" viewportClass="px-1">
+						<div bind:this={measureEl}>
+							<Tabs.Content value="package.yml"><pre>{pkg.yamlRaw}</pre></Tabs.Content>
+							<Tabs.Content value="package.pak"><pre>{pkg.pakRaw}</pre></Tabs.Content>
+							<Tabs.Content value="history">
+								<ul class="divide-y divide-border">
+									{#each pkg.commits as commit (commit.hash)}
+										<li class="flex flex-col gap-0.5 px-3 py-2.5 text-sm">
+											<div class="flex items-baseline justify-between gap-3">
+												<span class="truncate text-foreground">{commit.message}</span>
+												<span class="shrink-0 font-mono text-xs text-primary"
+													>{commit.hash.slice(0, 7)}</span
+												>
+											</div>
+											<div class="text-xs text-muted-foreground">
+												{commit.authorName} — {fmtDate(commit.date)}
+											</div>
+										</li>
+									{:else}
+										<li class="px-3 py-2.5 text-sm text-muted-foreground">no history</li>
+									{/each}
+								</ul>
+							</Tabs.Content>
+						</div>
+					</ScrollArea.Root>
+				</div>
+			</div>
+		</Tabs.Root>
 	{/if}
 </div>

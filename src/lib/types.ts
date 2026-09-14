@@ -30,6 +30,9 @@ export interface Package {
 	maintainer: string | null;
 	dependencies: string[];
 	pak: PakBuild | null;
+	yamlRaw: string;
+	pakRaw: string | null;
+	commits: CommitInfo[];
 	firstCommit: CommitInfo | null;
 	lastCommit: CommitInfo | null;
 }
@@ -39,6 +42,11 @@ export interface Repo {
 	cloneUrl: string;
 }
 
+export interface ProjectBadge {
+	label: string;
+	href: string | null;
+}
+
 export interface Contributor {
 	slug: string;
 	username: string;
@@ -46,4 +54,5 @@ export interface Contributor {
 	avatarUrl: string;
 	githubUrl: string;
 	bioHtml: string;
+	badges: ProjectBadge[];
 }

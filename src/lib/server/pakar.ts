@@ -11,7 +11,7 @@ const REF = env.PAKAR_REPO_REF ?? 'main';
 const TOKEN = env.PAKAR_GITHUB_TOKEN;
 const CACHE_TTL_MS = Number(env.PAKAR_CACHE_TTL_MS ?? 60_000);
 
-function parsePak(text: string): PakBuild {
+export function parsePak(text: string): PakBuild {
 	const lines = text.split(/\r?\n/);
 	const result: Record<string, unknown> = {};
 	for (let i = 0; i < lines.length; i++) {
@@ -46,7 +46,7 @@ function parsePak(text: string): PakBuild {
 	return result as PakBuild;
 }
 
-function slugify(value: string): string {
+export function slugify(value: string): string {
 	return String(value)
 		.trim()
 		.toLowerCase()
@@ -71,13 +71,16 @@ async function loadPackage(dir: string): Promise<Package | null> {
 	const ymlEntry = entries.find((e) => e.name === 'package.yml' || e.name === 'package.yaml');
 	if (!ymlEntry) return null;
 	const ymlFile = (await ghContents(REPO, ymlEntry.path, REF, TOKEN)) as GithubEntry;
-	const meta = (loadYaml(decodeContent(ymlFile)) ?? {}) as Record<string, unknown>;
+	const yamlRaw = decodeContent(ymlFile);
+	const meta = (loadYaml(yamlRaw) ?? {}) as Record<string, unknown>;
 
 	const pakEntry = entries.find((e) => e.name === 'package.pak');
 	let pak: PakBuild | null = null;
+	let pakRaw: string | null = null;
 	if (pakEntry) {
 		const pakFile = (await ghContents(REPO, pakEntry.path, REF, TOKEN)) as GithubEntry;
-		pak = parsePak(decodeContent(pakFile));
+		pakRaw = decodeContent(pakFile);
+		pak = parsePak(pakRaw);
 	}
 
 	const slug = slugify((meta.slug as string) || (meta.name as string) || dir);
@@ -94,6 +97,9 @@ async function loadPackage(dir: string): Promise<Package | null> {
 		maintainer: (meta.maintainer as string) ?? null,
 		dependencies: (meta.dependencies as string[]) ?? [],
 		pak,
+		yamlRaw,
+		pakRaw,
+		commits,
 		firstCommit: commits[commits.length - 1] ?? null,
 		lastCommit: commits[0] ?? null
 	};
