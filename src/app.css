@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+@theme {
+	--color-background: var(--ctp-crust);
+	--color-foreground: var(--ctp-text);
+	--color-card: var(--ctp-base);
+	--color-card-foreground: var(--ctp-text);
+	--color-popover: var(--ctp-mantle);
+	--color-popover-foreground: var(--ctp-text);
+	--color-primary: var(--ctp-green);
+	--color-primary-foreground: var(--ctp-crust);
+	--color-secondary: var(--ctp-surface0);
+	--color-secondary-foreground: var(--ctp-text);
+	--color-muted: var(--ctp-mantle);
+	--color-muted-foreground: var(--ctp-overlay1);
+	--color-accent: var(--ctp-surface0);
+	--color-accent-foreground: var(--ctp-text);
+	--color-destructive: var(--ctp-red);
+	--color-destructive-foreground: var(--ctp-crust);
+	--color-border: var(--ctp-surface0);
+	--color-input: var(--ctp-surface0);
+	--color-ring: var(--ctp-green);
+	--radius: 0.5rem;
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--font-sans: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
+}
