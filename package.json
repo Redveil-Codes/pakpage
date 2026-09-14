@@ -16,7 +16,7 @@
 		"marked": "^18.0.13"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-vercel": "^6.3.4",
+		"@sveltejs/adapter-netlify": "^6.0.4",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@types/js-yaml": "^4.0.9",
