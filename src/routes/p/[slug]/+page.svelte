@@ -2,7 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { tick } from 'svelte';
 	import type { PageProps } from './$types';
-	import { getPackageBySlug } from '$lib/search';
+	import { getPackageBySlug, quoteIfNeeded } from '$lib/search';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import * as ScrollArea from '$lib/components/ui/scroll-area';
@@ -88,7 +88,7 @@
 			</dd>
 			{#if pkg.maintainer}
 				<dt>maintainer</dt>
-				<dd><a href="/?q=m:{pkg.maintainer}">{pkg.maintainer}</a></dd>
+				<dd><a href="/?q=m:{quoteIfNeeded(pkg.maintainer)}">{pkg.maintainer}</a></dd>
 			{/if}
 			{#if pkg.firstCommit}
 				<dt>submitter</dt>

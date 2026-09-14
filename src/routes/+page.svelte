@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { untrack } from 'svelte';
 	import { page as pageState } from '$app/state';
-	import { searchPackages } from '$lib/search';
-	import { fly, scale } from 'svelte/transition';
+	import { searchPackages, quoteIfNeeded } from '$lib/search';
+	import { fly } from 'svelte/transition';
 	import * as Card from '$lib/components/ui/card';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { Package } from '$lib/types';
@@ -46,7 +48,6 @@
 
 	let query = $state(browser ? (new URLSearchParams(location.search).get('q') ?? '') : '');
 	let inputEl: HTMLInputElement;
-	let openDepsFor = $state<string | null>(null);
 	let page = $state(1);
 
 	let results = $derived(query.trim() ? searchPackages(data.packages, query) : data.packages);
@@ -59,6 +60,11 @@
 	$effect(() => {
 		results;
 		page = 1;
+	});
+
+	$effect(() => {
+		const q = pageState.url.searchParams.get('q') ?? '';
+		if (untrack(() => query) !== q) query = q;
 	});
 
 	function onInput() {
@@ -74,12 +80,6 @@
 		query = tokens.join(' ');
 		onInput();
 		inputEl.focus();
-		openDepsFor = null;
-	}
-
-	function toggleDeps(e: MouseEvent, slug: string) {
-		e.stopPropagation();
-		openDepsFor = openDepsFor === slug ? null : slug;
 	}
 
 	function onKeydown(e: KeyboardEvent) {
@@ -87,24 +87,11 @@
 		if (e.key === '/' && !typing) {
 			e.preventDefault();
 			inputEl.focus();
-		} else if (e.key === 'Escape') {
-			if (openDepsFor) {
-				openDepsFor = null;
-			} else if (document.activeElement === inputEl) {
-				query = '';
-				inputEl.blur();
-				onInput();
-			}
+		} else if (e.key === 'Escape' && document.activeElement === inputEl) {
+			query = '';
+			inputEl.blur();
+			onInput();
 		}
-	}
-
-	function onWindowClick() {
-		openDepsFor = null;
-	}
-
-	function pickDep(e: MouseEvent, dep: string) {
-		e.stopPropagation();
-		addFilter(`d:${dep}`);
 	}
 </script>
 
@@ -118,7 +105,7 @@
 	<link rel="stylesheet" href="/css/home.css" />
 </svelte:head>
 
-<svelte:window onkeydown={onKeydown} onclick={onWindowClick} />
+<svelte:window onkeydown={onKeydown} />
 
 <section class="intro">
 	<h1>pak</h1>
@@ -166,7 +153,13 @@ pak = = show installed packages</pre>
 						<div class="flex min-w-0 items-center gap-2">
 							{#if pkg.maintainer}
 								<Tooltip.Root>
-									<Tooltip.Trigger class="pointer-events-auto">
+									<Tooltip.Trigger
+										class="pointer-events-auto cursor-pointer"
+										onclick={(e: MouseEvent) => {
+											e.stopPropagation();
+											addFilter(`m:${quoteIfNeeded(pkg.maintainer!)}`);
+										}}
+									>
 										<Avatar.Root class="h-6 w-6">
 											{#if avatarUrl(pkg.maintainer) && !forceSkeleton}
 												<Avatar.Image src={avatarUrl(pkg.maintainer)} alt={pkg.maintainer} />
@@ -194,24 +187,19 @@ pak = = show installed packages</pre>
 									>{pkg.dependencies[0]}</Badge
 								>
 							{:else if pkg.dependencies.length > 1}
-								<div class="relative">
-									<Badge interactive onclick={(e: MouseEvent) => toggleDeps(e, pkg.slug)}>
+								<DropdownMenu.Root>
+									<DropdownMenu.Trigger
+										class="pointer-events-auto inline-flex cursor-pointer items-center rounded-md border border-border bg-secondary px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground"
+										onclick={(e: MouseEvent) => e.stopPropagation()}
+									>
 										{pkg.dependencies.length} deps
-									</Badge>
-									{#if openDepsFor === pkg.slug}
-										<div
-											class="absolute left-0 top-[calc(100%+6px)] z-10 flex min-w-[140px] flex-col gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg"
-											transition:scale={{ duration: 140, start: 0.9 }}
-										>
-											{#each pkg.dependencies as dep (dep)}
-												<button
-													class="cursor-pointer rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-													onclick={(e) => pickDep(e, dep)}>{dep}</button
-												>
-											{/each}
-										</div>
-									{/if}
-								</div>
+									</DropdownMenu.Trigger>
+									<DropdownMenu.Content align="start">
+										{#each pkg.dependencies as dep (dep)}
+											<DropdownMenu.Item onSelect={() => addFilter(`d:${dep}`)}>{dep}</DropdownMenu.Item>
+										{/each}
+									</DropdownMenu.Content>
+								</DropdownMenu.Root>
 							{/if}
 						</div>
 					</Card.Content>

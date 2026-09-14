@@ -19,22 +19,33 @@ const FIELD_FILTERS: Record<string, (p: Package, val: string) => boolean> = {
 	maintainer: (p, val) => (p.maintainer ?? '').toLowerCase().includes(val)
 };
 
+function unquote(value: string): string {
+	if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) return value.slice(1, -1);
+	return value;
+}
+
+export function quoteIfNeeded(value: string): string {
+	return /\s/.test(value) ? `"${value}"` : value;
+}
+
 function tokenScore(p: Package, token: string): number | null {
 	const prefixed = token.match(/^(\w+):(.*)$/);
 	if (prefixed) {
 		const filter = FIELD_FILTERS[prefixed[1].toLowerCase()];
 		if (filter) {
-			const val = prefixed[2].trim().toLowerCase();
+			const val = unquote(prefixed[2].trim()).toLowerCase();
 			if (!val) return 0;
 			return filter(p, val) ? 50 : null;
 		}
 	}
-	const s = score(p, token.toLowerCase());
+	const s = score(p, unquote(token).toLowerCase());
 	return s > 0 ? s : null;
 }
 
+const TOKEN_RE = /(?:[^\s"]+|"[^"]*")+/g;
+
 export function searchPackages(packages: Package[], query: string): Package[] {
-	const tokens = query.trim().split(/\s+/).filter(Boolean);
+	const tokens = query.trim().match(TOKEN_RE) ?? [];
 	if (!tokens.length) return packages;
 
 	const matches: { p: Package; s: number }[] = [];

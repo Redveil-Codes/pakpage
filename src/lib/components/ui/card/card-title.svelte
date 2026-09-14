@@ -9,6 +9,6 @@
 	}: { class?: string; children?: Snippet; [key: string]: unknown } = $props();
 </script>
 
-<div class={cn('flex items-baseline justify-between gap-2 font-semibold text-foreground', className)} {...rest}>
+<div class={cn('min-w-0 font-semibold text-foreground', className)} {...rest}>
 	{@render children?.()}
 </div>
