@@ -11,6 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 
 const REPO_URL = process.env.PAKAR_REPO_URL ?? 'git@github.com:Redveil-Codes/pakar.git';
+const REPO_HTTPS_URL = process.env.PAKAR_REPO_HTTPS_URL ?? 'https://github.com/Redveil-Codes/pakar';
 const DEPLOY_KEY = resolve(process.env.PAKAR_DEPLOY_KEY ?? join(homedir(), '.ssh', 'pakar_deploy_key'));
 const CACHE_DIR = resolve(process.env.PAKAR_CACHE_DIR ?? join(projectRoot, '.cache', 'pakar'));
 const OUT_FILE = join(projectRoot, 'src', 'lib', 'data', 'packages.json');
@@ -40,7 +41,7 @@ function resolveRepoPath() {
 
 	if (existsSync(join(CACHE_DIR, '.git'))) {
 		console.log(`[sync-data] pulling latest into ${CACHE_DIR}`);
-		git(['fetch', '--depth', '1', 'origin', 'main'], CACHE_DIR);
+		git(['fetch', 'origin', 'main'], CACHE_DIR);
 		git(['reset', '--hard', 'origin/main'], CACHE_DIR);
 		return CACHE_DIR;
 	}
@@ -53,7 +54,7 @@ function resolveRepoPath() {
 				`Generate one and add it as a read-only Deploy Key on the pakar repo, or set PAKAR_REPO_PATH.`
 		);
 	}
-	execFileSync('git', ['clone', '--depth', '1', REPO_URL, CACHE_DIR], { encoding: 'utf-8', env: gitEnv() });
+	execFileSync('git', ['clone', REPO_URL, CACHE_DIR], { encoding: 'utf-8', env: gitEnv() });
 	return CACHE_DIR;
 }
 
@@ -100,17 +101,19 @@ function slugify(value) {
 		.replace(/^-+|-+$/g, '');
 }
 
-function lastCommitFor(repoPath, relDir) {
+function commitsFor(repoPath, relDir) {
 	const format = ['%H', '%an', '%ae', '%aI', '%s'].join('%x1f');
 	let raw;
 	try {
-		raw = git(['log', '-1', `--format=${format}`, '--', relDir], repoPath);
+		raw = git(['log', `--format=${format}`, '--', relDir], repoPath);
 	} catch {
-		return null;
+		return [];
 	}
-	if (!raw) return null;
-	const [hash, authorName, authorEmail, date, message] = raw.split('\x1f');
-	return { hash, authorName, authorEmail, date, message };
+	if (!raw) return [];
+	return raw.split('\n').map((line) => {
+		const [hash, authorName, authorEmail, date, message] = line.split('\x1f');
+		return { hash, authorName, authorEmail, date, message };
+	});
 }
 
 function main() {
@@ -132,7 +135,9 @@ function main() {
 			const pak = existsSync(pakPath) ? parsePak(readFileSync(pakPath, 'utf-8')) : null;
 
 			const slug = slugify(meta.slug || meta.name || dir);
-			const lastCommit = lastCommitFor(repoPath, `packages/${dir}`);
+			const commits = commitsFor(repoPath, `packages/${dir}`);
+			const lastCommit = commits[0] ?? null;
+			const firstCommit = commits[commits.length - 1] ?? null;
 
 			return {
 				slug,
@@ -142,8 +147,10 @@ function main() {
 				description: meta.description ?? '',
 				homepage: meta.homepage ?? null,
 				license: meta.license ?? null,
+				maintainer: meta.maintainer ?? null,
 				dependencies: meta.dependencies ?? [],
 				pak,
+				firstCommit,
 				lastCommit
 			};
 		})
@@ -157,8 +164,13 @@ function main() {
 		throw new Error(`Duplicate package slugs: ${dupes.map(([s]) => s).join(', ')}`);
 	}
 
+	const repo = { httpsUrl: REPO_HTTPS_URL, cloneUrl: `${REPO_HTTPS_URL}.git` };
+
 	mkdirSync(dirname(OUT_FILE), { recursive: true });
-	writeFileSync(OUT_FILE, JSON.stringify({ generatedAt: new Date().toISOString(), packages }, null, '\t') + '\n');
+	writeFileSync(
+		OUT_FILE,
+		JSON.stringify({ generatedAt: new Date().toISOString(), repo, packages }, null, '\t') + '\n'
+	);
 	console.log(`[sync-data] wrote ${packages.length} package(s) to ${OUT_FILE}`);
 }
 

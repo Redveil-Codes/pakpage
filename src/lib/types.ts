@@ -11,7 +11,7 @@ export interface PakBuild {
 	[key: string]: unknown;
 }
 
-export interface LastCommit {
+export interface CommitInfo {
 	hash: string;
 	authorName: string;
 	authorEmail: string;
@@ -27,7 +27,14 @@ export interface Package {
 	description: string;
 	homepage: string | null;
 	license: string | null;
+	maintainer: string | null;
 	dependencies: string[];
 	pak: PakBuild | null;
-	lastCommit: LastCommit | null;
+	firstCommit: CommitInfo | null;
+	lastCommit: CommitInfo | null;
+}
+
+export interface Repo {
+	httpsUrl: string;
+	cloneUrl: string;
 }
