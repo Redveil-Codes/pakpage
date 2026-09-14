@@ -13,6 +13,14 @@ export async function cached<T>(key: string, ttlMs: number, load: () => Promise<
 			store.set(key, { value, expires: Date.now() + ttlMs });
 			return value;
 		})
+		.catch((err) => {
+			const stale = store.get(key);
+			if (stale) {
+				console.error(`cached(): refresh failed for "${key}", serving stale value`, err);
+				return stale.value as T;
+			}
+			throw err;
+		})
 		.finally(() => inflight.delete(key));
 
 	inflight.set(key, promise);

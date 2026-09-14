@@ -1,0 +1,29 @@
+.content {
+	max-width: 60ch;
+}
+
+.content h1 {
+	font-size: clamp(1.6rem, 4vw, 2.1rem);
+	margin: 0 0 1.25rem;
+}
+
+.content p {
+	color: var(--text-dim);
+	line-height: 1.6;
+	margin: 0 0 1rem;
+}
+
+.content strong {
+	color: var(--text);
+	display: block;
+	margin-bottom: 0.4rem;
+}
+
+.content code {
+	background: var(--bg-raised);
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	padding: 0.05rem 0.3rem;
+	font-size: 0.9em;
+	color: var(--accent);
+}
