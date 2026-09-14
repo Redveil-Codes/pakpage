@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { searchPackages } from '$lib/data';
-	import { fly } from 'svelte/transition';
+	import { fly, scale } from 'svelte/transition';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	let query = $state(browser ? (new URLSearchParams(location.search).get('q') ?? '') : '');
 	let inputEl: HTMLInputElement;
+	let openDepsFor = $state<string | null>(null);
 
 	let results = $derived(query.trim() ? searchPackages(query) : data.packages);
 
@@ -18,24 +19,49 @@
 		history.replaceState(history.state, '', url);
 	}
 
+	function setFilter(value: string) {
+		query = value;
+		onInput();
+		inputEl.focus();
+		openDepsFor = null;
+	}
+
+	function toggleDeps(e: MouseEvent, slug: string) {
+		e.stopPropagation();
+		openDepsFor = openDepsFor === slug ? null : slug;
+	}
+
 	function onKeydown(e: KeyboardEvent) {
 		const typing = document.activeElement instanceof HTMLInputElement;
 		if (e.key === '/' && !typing) {
 			e.preventDefault();
 			inputEl.focus();
-		} else if (e.key === 'Escape' && document.activeElement === inputEl) {
-			query = '';
-			inputEl.blur();
-			onInput();
+		} else if (e.key === 'Escape') {
+			if (openDepsFor) {
+				openDepsFor = null;
+			} else if (document.activeElement === inputEl) {
+				query = '';
+				inputEl.blur();
+				onInput();
+			}
 		}
+	}
+
+	function onWindowClick() {
+		openDepsFor = null;
+	}
+
+	function pickDep(e: MouseEvent, dep: string) {
+		e.stopPropagation();
+		setFilter(`d:${dep}`);
 	}
 </script>
 
 <svelte:head>
-	<title>pakdatabase</title>
+	<title>PakPage</title>
 </svelte:head>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onclick={onWindowClick} />
 
 <section class="intro">
 	<h1>pak</h1>
@@ -73,18 +99,37 @@ pak = = show installed packages</pre>
 
 <ul class="results">
 	{#each results as pkg, i (pkg.slug)}
-		<li in:fly={{ y: 6, duration: 220, delay: i * 25 }}>
-			<a href="/p/{pkg.slug}">
-				<span class="name">{pkg.name}</span>
-				<span class="version">{pkg.version}</span>
-			</a>
-			<p>{pkg.description}</p>
-			<div class="tags">
-				{#if pkg.license}<span class="tag">{pkg.license}</span>{/if}
-				{#if pkg.dependencies.length}
-					<span class="tag">{pkg.dependencies.length} dep{pkg.dependencies.length === 1 ? '' : 's'}</span
-					>
-				{/if}
+		<li in:fly={{ y: 6, duration: 180, delay: Math.min(i * 20, 180) }}>
+			<a class="card-link" href="/p/{pkg.slug}" aria-label={pkg.name}></a>
+			<div class="card-body">
+				<div class="row">
+					<span class="name">{pkg.name}</span>
+					<span class="version">{pkg.version}</span>
+				</div>
+				<p>{pkg.description}</p>
+				<div class="tags">
+					{#if pkg.license}
+						<button class="tag" onclick={() => setFilter(`l:${pkg.license}`)}>{pkg.license}</button>
+					{/if}
+					{#if pkg.dependencies.length === 1}
+						<button class="tag" onclick={() => setFilter(`d:${pkg.dependencies[0]}`)}
+							>{pkg.dependencies[0]}</button
+						>
+					{:else if pkg.dependencies.length > 1}
+						<div class="dep-wrap">
+							<button class="tag" onclick={(e) => toggleDeps(e, pkg.slug)}>
+								{pkg.dependencies.length} deps
+							</button>
+							{#if openDepsFor === pkg.slug}
+								<div class="dep-menu" transition:scale={{ duration: 140, start: 0.9 }}>
+									{#each pkg.dependencies as dep (dep)}
+										<button onclick={(e) => pickDep(e, dep)}>{dep}</button>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
+				</div>
 			</div>
 		</li>
 	{:else}
@@ -173,9 +218,9 @@ pak = = show installed packages</pre>
 	}
 
 	.results li {
+		position: relative;
 		border: 1px solid var(--border);
 		border-radius: 10px;
-		padding: 0.95rem 1.1rem;
 		background: var(--bg-card);
 		transition:
 			border-color 0.18s var(--ease),
@@ -194,27 +239,36 @@ pak = = show installed packages</pre>
 		background: none;
 		border-style: dashed;
 		grid-column: 1 / -1;
+		padding: 0.95rem 1.1rem;
 	}
 
-	.results a {
+	.card-link {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+	}
+
+	.card-body {
+		position: relative;
+		z-index: 2;
+		padding: 0.95rem 1.1rem;
+		pointer-events: none;
+	}
+
+	.row {
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
 		gap: 0.5rem;
-		color: var(--text);
 		font-weight: 600;
 	}
 
-	.results a:hover {
-		text-decoration: none;
-		color: var(--text);
-	}
-
-	.results a:hover .name {
+	.results li:hover .name {
 		color: var(--accent);
 	}
 
 	.name {
+		color: var(--text);
 		transition: color 0.15s var(--ease);
 	}
 
@@ -239,11 +293,67 @@ pak = = show installed packages</pre>
 	}
 
 	.tag {
+		position: relative;
+		z-index: 3;
+		pointer-events: auto;
+		font-family: inherit;
 		font-size: 0.72rem;
 		color: var(--text-dim);
 		background: var(--bg-raised);
 		border: 1px solid var(--border);
 		border-radius: 4px;
-		padding: 0.1rem 0.4rem;
+		padding: 0.15rem 0.45rem;
+		cursor: pointer;
+		transition:
+			border-color 0.15s var(--ease),
+			color 0.15s var(--ease);
+	}
+
+	.tag:hover {
+		border-color: var(--accent-dim);
+		color: var(--accent);
+	}
+
+	.dep-wrap {
+		position: relative;
+		z-index: 3;
+		pointer-events: auto;
+	}
+
+	.dep-menu {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 0;
+		z-index: 4;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		min-width: 140px;
+		background: var(--bg-raised);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 0.35rem;
+		box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--ctp-crust) 90%, transparent);
+		transform-origin: top left;
+	}
+
+	.dep-menu button {
+		font-family: inherit;
+		text-align: left;
+		font-size: 0.78rem;
+		color: var(--text-dim);
+		background: none;
+		border: none;
+		border-radius: 5px;
+		padding: 0.3rem 0.5rem;
+		cursor: pointer;
+		transition:
+			background 0.12s var(--ease),
+			color 0.12s var(--ease);
+	}
+
+	.dep-menu button:hover {
+		background: var(--bg-card);
+		color: var(--accent);
 	}
 </style>

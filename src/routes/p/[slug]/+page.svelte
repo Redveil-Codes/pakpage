@@ -1,12 +1,12 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import type { PageProps } from './$types';
 	import { getPackageBySlug, repo } from '$lib/data';
 
 	let { data }: PageProps = $props();
 	let pkg = $derived(data.pkg);
 
-	let copiedInstall = $state(false);
-	let copiedClone = $state(false);
+	let copied = $state(false);
 
 	function fmtDate(iso: string) {
 		return new Date(iso).toLocaleDateString(undefined, {
@@ -16,15 +16,10 @@
 		});
 	}
 
-	async function copy(text: string, flag: 'install' | 'clone') {
-		await navigator.clipboard.writeText(text);
-		if (flag === 'install') {
-			copiedInstall = true;
-			setTimeout(() => (copiedInstall = false), 1200);
-		} else {
-			copiedClone = true;
-			setTimeout(() => (copiedClone = false), 1200);
-		}
+	async function copyInstall() {
+		await navigator.clipboard.writeText(`pak + ${pkg.slug}`);
+		copied = true;
+		setTimeout(() => (copied = false), 1200);
 	}
 
 	let blobBase = $derived(`${repo.httpsUrl}/blob/main/packages/${pkg.dir}`);
@@ -33,84 +28,131 @@
 </script>
 
 <svelte:head>
-	<title>{pkg.name} — pakdatabase</title>
+	<title>{pkg.name} — PakPage</title>
 </svelte:head>
 
-<a class="back" href="/">&larr; all packages</a>
+<div in:fade={{ duration: 160 }}>
+	<a class="back" href="/">&larr; all packages</a>
 
-<h1>{pkg.name} <span class="version">{pkg.version}</span></h1>
-<p class="desc">{pkg.description}</p>
+	<h1>{pkg.name} <span class="version">{pkg.version}</span></h1>
+	<p class="desc">{pkg.description}</p>
 
-<button class="install" onclick={() => copy(`pak + ${pkg.slug}`, 'install')}>
-	<code>pak + {pkg.slug}</code>
-	<span>{copiedInstall ? 'copied' : 'copy'}</span>
-</button>
+	<button class="install" onclick={copyInstall}>
+		<code>pak + {pkg.slug}</code>
+		<span class="copy-flag" class:copied>{copied ? 'copied' : 'copy'}</span>
+	</button>
 
-<div class="grid">
-	<section class="panel">
-		<h2>details</h2>
-		<dl>
-			{#if pkg.homepage}
-				<dt>upstream url</dt>
-				<dd><a href={pkg.homepage} target="_blank" rel="noreferrer">{pkg.homepage}</a></dd>
-			{/if}
-			{#if pkg.license}
-				<dt>license</dt>
-				<dd>{pkg.license}</dd>
-			{/if}
-			<dt>dependencies</dt>
-			<dd>
-				{#if pkg.dependencies.length}
-					{#each pkg.dependencies as dep, i (dep)}
-						{#if i > 0},&nbsp;{/if}{#if getPackageBySlug(dep)}<a href="/p/{dep}">{dep}</a
-							>{:else}{dep}{/if}
-					{/each}
-				{:else}
-					none
+	<div class="grid">
+		<section class="panel" in:fly={{ y: 8, duration: 220, delay: 40 }}>
+			<h2>details</h2>
+			<dl>
+				{#if pkg.homepage}
+					<dt>upstream url</dt>
+					<dd><a href={pkg.homepage} target="_blank" rel="noreferrer">{pkg.homepage}</a></dd>
 				{/if}
-			</dd>
-			{#if pkg.maintainer}
-				<dt>maintainer</dt>
-				<dd>{pkg.maintainer}</dd>
-			{/if}
-			{#if pkg.firstCommit}
-				<dt>submitter</dt>
-				<dd>{pkg.firstCommit.authorName}</dd>
-				<dt>first submitted</dt>
-				<dd>{fmtDate(pkg.firstCommit.date)}</dd>
-			{/if}
-			{#if pkg.lastCommit}
-				<dt>last packager</dt>
-				<dd>{pkg.lastCommit.authorName}</dd>
-				<dt>last updated</dt>
+				{#if pkg.license}
+					<dt>license</dt>
+					<dd><a href="/?q=l:{pkg.license}">{pkg.license}</a></dd>
+				{/if}
+				<dt>dependencies</dt>
 				<dd>
-					{fmtDate(pkg.lastCommit.date)}
-					<span class="msg">— {pkg.lastCommit.message}</span>
+					{#if pkg.dependencies.length}
+						{#each pkg.dependencies as dep, i (dep)}
+							{#if i > 0},&nbsp;{/if}{#if getPackageBySlug(dep)}<a href="/p/{dep}">{dep}</a
+								>{:else}{dep}{/if}
+						{/each}
+					{:else}
+						none
+					{/if}
 				</dd>
-			{/if}
-		</dl>
-	</section>
+				{#if pkg.maintainer}
+					<dt>maintainer</dt>
+					<dd><a href="/?q=m:{pkg.maintainer}">{pkg.maintainer}</a></dd>
+				{/if}
+				{#if pkg.firstCommit}
+					<dt>submitter</dt>
+					<dd>{pkg.firstCommit.authorName}</dd>
+					<dt>first submitted</dt>
+					<dd>{fmtDate(pkg.firstCommit.date)}</dd>
+				{/if}
+				{#if pkg.lastCommit}
+					<dt>last packager</dt>
+					<dd>{pkg.lastCommit.authorName}</dd>
+					<dt>last updated</dt>
+					<dd>
+						{fmtDate(pkg.lastCommit.date)}
+						<span class="msg">— {pkg.lastCommit.message}</span>
+					</dd>
+				{/if}
+			</dl>
+		</section>
 
-	<section class="panel">
-		<h2>package actions</h2>
-		<ul class="actions">
-			<li><a href="{blobBase}/package.yml" target="_blank" rel="noreferrer">view package.yml</a></li>
-			<li><a href="{blobBase}/package.pak" target="_blank" rel="noreferrer">view package.pak</a></li>
-			<li><a href={commitsUrl} target="_blank" rel="noreferrer">view changes</a></li>
-			<li><a href={snapshotUrl} target="_blank" rel="noreferrer">download repo snapshot (.zip)</a></li>
-		</ul>
+		<section class="panel" in:fly={{ y: 8, duration: 220, delay: 80 }}>
+			<h2>package actions</h2>
+			<ul class="actions">
+				<li>
+					<a href="{blobBase}/package.yml" target="_blank" rel="noreferrer">
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+							><path
+								d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linejoin="round"
+							/><path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg
+						>
+						view package.yml
+					</a>
+				</li>
+				<li>
+					<a href="{blobBase}/package.pak" target="_blank" rel="noreferrer">
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+							><path
+								d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linejoin="round"
+							/><path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg
+						>
+						view package.pak
+					</a>
+				</li>
+				<li>
+					<a href={commitsUrl} target="_blank" rel="noreferrer">
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+							><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" /><path
+								d="M12 8v4l3 2"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+							/></svg
+						>
+						view changes
+					</a>
+				</li>
+				<li>
+					<a href={snapshotUrl} target="_blank" rel="noreferrer">
+						<svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+							><path
+								d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/></svg
+						>
+						download repo snapshot (.zip)
+					</a>
+				</li>
+			</ul>
+		</section>
+	</div>
 
-		<h2>git clone url</h2>
-		<button class="clone" onclick={() => copy(repo.cloneUrl, 'clone')}>
-			<code>{repo.cloneUrl}</code>
-			<span>{copiedClone ? 'copied' : 'copy'}</span>
-		</button>
-	</section>
-</div>
-
-{#if pkg.pak}
-	<h2>package.pak</h2>
-	<pre>{#if pkg.pak.CC}CC={pkg.pak.CC}
+	{#if pkg.pak}
+		<div class="term">
+			<div class="term-bar"><span class="d red"></span><span class="d yellow"></span><span
+					class="d green"
+				></span><span class="term-title">package.pak</span></div>
+			<pre>{#if pkg.pak.CC}CC={pkg.pak.CC}
 {/if}SRC={pkg.pak.SRC}
 DEPENDENCIES={Array.isArray(pkg.pak.DEPENDENCIES) ? pkg.pak.DEPENDENCIES.join(' ') : pkg.pak.DEPENDENCIES}
 BUILDDIR={pkg.pak.BUILDDIR}
@@ -121,7 +163,9 @@ INSTALL_LIB={pkg.pak.INSTALL_LIB}
 BUILD_SCRIPT=(
 {#each pkg.pak.BUILD_SCRIPT ?? [] as line}    {line}
 {/each})</pre>
-{/if}
+		</div>
+	{/if}
+</div>
 
 <style>
 	.back {
@@ -148,8 +192,7 @@ BUILD_SCRIPT=(
 		margin: 0 0 1.5rem;
 	}
 
-	.install,
-	.clone {
+	.install {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -159,6 +202,7 @@ BUILD_SCRIPT=(
 		border: 1px solid var(--border);
 		border-radius: 8px;
 		padding: 0.7rem 1rem;
+		margin-bottom: 2rem;
 		cursor: pointer;
 		color: var(--text);
 		transition:
@@ -166,32 +210,29 @@ BUILD_SCRIPT=(
 			transform 0.12s var(--ease);
 	}
 
-	.install {
-		margin-bottom: 2rem;
-	}
-
-	.install:hover,
-	.clone:hover {
+	.install:hover {
 		border-color: var(--accent-dim);
 	}
 
-	.install:active,
-	.clone:active {
+	.install:active {
 		transform: scale(0.995);
 	}
 
-	.install code,
-	.clone code {
+	.install code {
 		color: var(--accent);
 		overflow-x: auto;
 	}
 
-	.install span,
-	.clone span {
+	.copy-flag {
 		color: var(--text-dim);
 		font-size: 0.8rem;
 		flex-shrink: 0;
 		margin-left: 0.75rem;
+		transition: color 0.15s var(--ease);
+	}
+
+	.copy-flag.copied {
+		color: var(--accent);
 	}
 
 	.grid {
@@ -206,6 +247,11 @@ BUILD_SCRIPT=(
 		border-radius: 10px;
 		padding: 1rem 1.15rem;
 		background: var(--bg-card);
+		transition: border-color 0.18s var(--ease);
+	}
+
+	.panel:hover {
+		border-color: var(--border-hover);
 	}
 
 	.panel h2 {
@@ -214,10 +260,6 @@ BUILD_SCRIPT=(
 		letter-spacing: 0.04em;
 		color: var(--text-dimmer);
 		margin: 0 0 0.75rem;
-	}
-
-	.panel h2:not(:first-child) {
-		margin-top: 1.25rem;
 	}
 
 	dl {
@@ -247,15 +289,68 @@ BUILD_SCRIPT=(
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.4rem;
+		gap: 0.35rem;
 	}
 
 	.actions a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		font-size: 0.9rem;
+		color: var(--text-dim);
 	}
 
-	h2 {
-		font-size: 1rem;
-		margin-bottom: 0.6rem;
+	.actions a:hover {
+		color: var(--accent);
+	}
+
+	.actions svg {
+		flex-shrink: 0;
+		opacity: 0.8;
+	}
+
+	.term {
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.term-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.5rem 0.75rem;
+		background: var(--bg-raised);
+		border-bottom: 1px solid var(--border);
+	}
+
+	.d {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+	}
+
+	.d.red {
+		background: var(--ctp-red);
+	}
+
+	.d.yellow {
+		background: var(--ctp-yellow);
+	}
+
+	.d.green {
+		background: var(--ctp-green);
+	}
+
+	.term-title {
+		margin-left: 0.5rem;
+		font-size: 0.78rem;
+		color: var(--text-dimmer);
+	}
+
+	.term pre {
+		border: none;
+		border-radius: 0;
+		margin: 0;
 	}
 </style>

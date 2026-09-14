@@ -14,8 +14,19 @@
 <div class="shell">
 	<header>
 		<a class="brand" href="/">
-			<span class="dot"></span>
-			pak<span class="accent">database</span>
+			<svg class="logo" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+				<rect width="32" height="32" rx="8" fill="var(--ctp-base)" />
+				<path
+					d="M9 11l6 5-6 5"
+					stroke="var(--accent)"
+					stroke-width="3"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					fill="none"
+				/>
+				<rect x="17" y="19" width="8" height="3" rx="1.5" fill="var(--accent)" />
+			</svg>
+			Pak<span class="accent">Page</span>
 		</a>
 		<nav>
 			<a href="https://github.com/Redveil-Codes/pakar" target="_blank" rel="noreferrer">source</a>
@@ -70,25 +81,13 @@
 		color: var(--text);
 	}
 
-	.dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: var(--accent);
-		box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
-		animation: pulse 2.4s var(--ease) infinite;
+	.logo {
+		border-radius: 8px;
+		transition: transform 0.2s var(--ease);
 	}
 
-	@keyframes pulse {
-		0% {
-			box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
-		}
-		70% {
-			box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent);
-		}
-		100% {
-			box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
-		}
+	.brand:hover .logo {
+		transform: rotate(-4deg) scale(1.05);
 	}
 
 	nav a {
