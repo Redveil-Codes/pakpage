@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import * as Pagination from '$lib/components/ui/pagination';
+	import { Badge } from '$lib/components/ui/badge';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -16,6 +18,11 @@
 
 <svelte:head>
 	<title>contributors — PakPage</title>
+	<meta name="description" content="the people behind Pak." />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="contributors — PakPage" />
+	<meta property="og:description" content="the people behind Pak." />
+	<meta name="twitter:card" content="summary" />
 	<link rel="stylesheet" href="/css/contributors.css" />
 </svelte:head>
 
@@ -37,6 +44,17 @@
 						<span class="contrib-username">@{c.username}</span>
 					</div>
 				</div>
+				{#if c.badges.length}
+					<div class="contrib-badges">
+						{#each c.badges as badge (badge.label)}
+							{#if badge.href}
+								<Badge href={badge.href} target="_blank" rel="noreferrer">{badge.label}</Badge>
+							{:else}
+								<Badge>{badge.label}</Badge>
+							{/if}
+						{/each}
+					</div>
+				{/if}
 				<div class="contrib-bio">{@html c.bioHtml}</div>
 			</div>
 		</li>
@@ -46,11 +64,19 @@
 </ul>
 
 {#if totalPages > 1}
-	<div class="pager">
-		<button disabled={pageClamped <= 1} onclick={() => (page = pageClamped - 1)}>&larr; prev</button>
-		<span class="pos">page {pageClamped} / {totalPages}</span>
-		<button disabled={pageClamped >= totalPages} onclick={() => (page = pageClamped + 1)}
-			>next &rarr;</button
-		>
-	</div>
+	<Pagination.Root count={data.contributors.length} perPage={PAGE_SIZE} bind:page class="mt-7 flex justify-center">
+		{#snippet children({ pages })}
+			<div class="flex items-center gap-1.5">
+				<Pagination.PrevButton />
+				{#each pages as p (p.key)}
+					{#if p.type === 'ellipsis'}
+						<span class="px-1 text-sm text-muted-foreground">…</span>
+					{:else}
+						<Pagination.Page page={p}>{p.value}</Pagination.Page>
+					{/if}
+				{/each}
+				<Pagination.NextButton />
+			</div>
+		{/snippet}
+	</Pagination.Root>
 {/if}

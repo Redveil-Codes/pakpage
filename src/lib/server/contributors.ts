@@ -5,7 +5,7 @@ import { env } from '$env/dynamic/private';
 import { cached } from './cache';
 import { ghContents } from './github';
 import type { GithubEntry } from './github';
-import type { Contributor } from '$lib/types';
+import type { Contributor, ProjectBadge } from '$lib/types';
 
 const LOCAL_DIR = resolve(env.CONTRIBUTORS_DIR ?? join(process.cwd(), 'static', 'contributors'));
 
@@ -18,6 +18,21 @@ const USER_TTL_MS = Number(env.CONTRIBUTORS_USER_CACHE_TTL_MS ?? 10 * 60_000);
 
 const GH_HEADERS = { 'User-Agent': 'pakpage', Accept: 'application/vnd.github+json' };
 const HEADER_RE = /^@git\s+(\S+)\s*$/i;
+const BADGES_RE = /^@badges\s+(.+)$/i;
+
+const KNOWN_PROJECTS: Record<string, ProjectBadge> = {
+	pak: { label: 'Pak', href: 'https://github.com/Redveil-Codes/pakar' },
+	pakpage: { label: 'PakPage', href: 'https://github.com/Redveil-Codes/pakpage' },
+	pakar: { label: 'Pakar', href: 'https://github.com/Redveil-Codes/pakar' }
+};
+
+function parseBadges(value: string): ProjectBadge[] {
+	return value
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.map((s) => KNOWN_PROJECTS[s.toLowerCase()] ?? { label: s, href: null });
+}
 
 interface RawBio {
 	slug: string;
@@ -50,11 +65,21 @@ function listLocalBios(): RawBio[] {
 	return out;
 }
 
-function parseBio(raw: string): { username: string; bodyMd: string } | null {
+function parseBio(raw: string): { username: string; bodyMd: string; badges: ProjectBadge[] } | null {
 	const lines = raw.split(/\r?\n/);
 	const match = (lines[0] ?? '').match(HEADER_RE);
 	if (!match) return null;
-	return { username: match[1], bodyMd: lines.slice(1).join('\n').trim() };
+
+	const rest = lines.slice(1);
+	let badges: ProjectBadge[] = [];
+	const bodyLines = rest.filter((line) => {
+		const badgesMatch = line.match(BADGES_RE);
+		if (!badgesMatch) return true;
+		badges = parseBadges(badgesMatch[1]);
+		return false;
+	});
+
+	return { username: match[1], bodyMd: bodyLines.join('\n').trim(), badges };
 }
 
 interface GithubProfile {
@@ -98,7 +123,8 @@ async function loadContributors(): Promise<Contributor[]> {
 			name: profile.name,
 			avatarUrl: profile.avatarUrl,
 			githubUrl: profile.githubUrl,
-			bioHtml: await marked.parse(parsed.bodyMd)
+			bioHtml: await marked.parse(parsed.bodyMd),
+			badges: parsed.badges
 		});
 	}
 

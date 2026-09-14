@@ -79,6 +79,16 @@
 	font-size: 0.78rem;
 }
 
+.contrib-badges {
+	position: relative;
+	z-index: 3;
+	pointer-events: auto;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-bottom: 0.65rem;
+}
+
 .contrib-bio {
 	position: relative;
 	z-index: 3;

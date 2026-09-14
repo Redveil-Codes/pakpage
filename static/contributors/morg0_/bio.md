@@ -1,3 +1,4 @@
 @git seetrace
+@badges pak
 
-Main developer of Pak 
+Main developer of Pak and project lead.
