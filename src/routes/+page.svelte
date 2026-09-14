@@ -233,6 +233,7 @@ pak = = show installed packages</pre>
 						>filter by maintainer: {pkg.maintainer}</ContextMenu.Item
 					>
 				{/if}
+				<ContextMenu.Item href="/?q=d:{pkg.slug}">view packages that depend on this</ContextMenu.Item>
 				<ContextMenu.Item href={githubUrl(pkg)} target="_blank" rel="noreferrer"
 					>view on GitHub</ContextMenu.Item
 				>

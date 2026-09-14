@@ -21,9 +21,10 @@ const HEADER_RE = /^@git\s+(\S+)\s*$/i;
 const BADGES_RE = /^@badges\s+(.+)$/i;
 
 const KNOWN_PROJECTS: Record<string, ProjectBadge> = {
-	pak: { label: 'Pak', href: 'https://github.com/Redveil-Codes/pakar' },
+	pak: { label: 'Pak', href: 'https://github.com/Redveil-Codes/pak' },
 	pakpage: { label: 'PakPage', href: 'https://github.com/Redveil-Codes/pakpage' },
-	pakar: { label: 'Pakar', href: 'https://github.com/Redveil-Codes/pakar' }
+	pakar: { label: 'Pakar', href: 'https://github.com/Redveil-Codes/pakar' },
+	mirror: { label: 'Mirror', href: 'https://github.com/Redveil-Codes/pakar' }
 };
 
 function parseBadges(value: string): ProjectBadge[] {
