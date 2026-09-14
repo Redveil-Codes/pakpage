@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import type { PageProps } from './$types';
-	import { getPackageBySlug, repo } from '$lib/data';
+	import { getPackageBySlug } from '$lib/search';
 
 	let { data }: PageProps = $props();
 	let pkg = $derived(data.pkg);
+	let repo = $derived(data.repo);
 
 	let copied = $state(false);
 
@@ -29,6 +30,7 @@
 
 <svelte:head>
 	<title>{pkg.name} — PakPage</title>
+	<link rel="stylesheet" href="/css/package.css" />
 </svelte:head>
 
 <div in:fade={{ duration: 160 }}>
@@ -58,7 +60,8 @@
 				<dd>
 					{#if pkg.dependencies.length}
 						{#each pkg.dependencies as dep, i (dep)}
-							{#if i > 0},&nbsp;{/if}{#if getPackageBySlug(dep)}<a href="/p/{dep}">{dep}</a
+							{#if i > 0},&nbsp;{/if}{#if getPackageBySlug(data.packages, dep)}<a href="/p/{dep}"
+									>{dep}</a
 								>{:else}{dep}{/if}
 						{/each}
 					{:else}
@@ -166,192 +169,3 @@ BUILD_SCRIPT=(
 		</div>
 	{/if}
 </div>
-
-<style>
-	.back {
-		display: inline-block;
-		color: var(--text-dim);
-		font-size: 0.85rem;
-		margin-bottom: 1.5rem;
-	}
-
-	h1 {
-		margin: 0 0 0.5rem;
-		font-size: clamp(1.4rem, 3.5vw, 1.75rem);
-	}
-
-	.version {
-		color: var(--accent);
-		font-weight: 400;
-		font-size: 1rem;
-	}
-
-	.desc {
-		color: var(--text-dim);
-		max-width: 60ch;
-		margin: 0 0 1.5rem;
-	}
-
-	.install {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-		font-family: inherit;
-		background: var(--bg-raised);
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		padding: 0.7rem 1rem;
-		margin-bottom: 2rem;
-		cursor: pointer;
-		color: var(--text);
-		transition:
-			border-color 0.18s var(--ease),
-			transform 0.12s var(--ease);
-	}
-
-	.install:hover {
-		border-color: var(--accent-dim);
-	}
-
-	.install:active {
-		transform: scale(0.995);
-	}
-
-	.install code {
-		color: var(--accent);
-		overflow-x: auto;
-	}
-
-	.copy-flag {
-		color: var(--text-dim);
-		font-size: 0.8rem;
-		flex-shrink: 0;
-		margin-left: 0.75rem;
-		transition: color 0.15s var(--ease);
-	}
-
-	.copy-flag.copied {
-		color: var(--accent);
-	}
-
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-		align-items: start;
-		gap: 1rem;
-		margin-bottom: 2rem;
-	}
-
-	.panel {
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 1rem 1.15rem;
-		background: var(--bg-card);
-		transition: border-color 0.18s var(--ease);
-	}
-
-	.panel:hover {
-		border-color: var(--border-hover);
-	}
-
-	.panel h2 {
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--text-dimmer);
-		margin: 0 0 0.75rem;
-	}
-
-	dl {
-		display: grid;
-		grid-template-columns: max-content 1fr;
-		gap: 0.4rem 1.25rem;
-		margin: 0;
-	}
-
-	dt {
-		color: var(--text-dim);
-		font-size: 0.85rem;
-	}
-
-	dd {
-		margin: 0;
-		word-break: break-word;
-	}
-
-	.msg {
-		color: var(--text-dimmer);
-	}
-
-	.actions {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-	}
-
-	.actions a {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.9rem;
-		color: var(--text-dim);
-	}
-
-	.actions a:hover {
-		color: var(--accent);
-	}
-
-	.actions svg {
-		flex-shrink: 0;
-		opacity: 0.8;
-	}
-
-	.term {
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		overflow: hidden;
-	}
-
-	.term-bar {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.5rem 0.75rem;
-		background: var(--bg-raised);
-		border-bottom: 1px solid var(--border);
-	}
-
-	.d {
-		width: 9px;
-		height: 9px;
-		border-radius: 50%;
-	}
-
-	.d.red {
-		background: var(--ctp-red);
-	}
-
-	.d.yellow {
-		background: var(--ctp-yellow);
-	}
-
-	.d.green {
-		background: var(--ctp-green);
-	}
-
-	.term-title {
-		margin-left: 0.5rem;
-		font-size: 0.78rem;
-		color: var(--text-dimmer);
-	}
-
-	.term pre {
-		border: none;
-		border-radius: 0;
-		margin: 0;
-	}
-</style>

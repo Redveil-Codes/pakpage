@@ -1,15 +1,4 @@
-import rawData from './packages.json';
-import rawContributors from './contributors.json';
-import type { Contributor, Package, Repo } from '$lib/types';
-
-export const packages = rawData.packages as Package[];
-export const generatedAt = rawData.generatedAt as string;
-export const repo = rawData.repo as Repo;
-export const contributors = rawContributors.contributors as Contributor[];
-
-export function getPackageBySlug(slug: string): Package | undefined {
-	return packages.find((p) => p.slug === slug);
-}
+import type { Package } from '$lib/types';
 
 function score(p: Package, q: string): number {
 	const name = p.name.toLowerCase();
@@ -44,7 +33,7 @@ function tokenScore(p: Package, token: string): number | null {
 	return s > 0 ? s : null;
 }
 
-export function searchPackages(query: string): Package[] {
+export function searchPackages(packages: Package[], query: string): Package[] {
 	const tokens = query.trim().split(/\s+/).filter(Boolean);
 	if (!tokens.length) return packages;
 
@@ -64,4 +53,8 @@ export function searchPackages(query: string): Package[] {
 	}
 
 	return matches.sort((a, b) => b.s - a.s || a.p.name.localeCompare(b.p.name)).map(({ p }) => p);
+}
+
+export function getPackageBySlug(packages: Package[], slug: string): Package | undefined {
+	return packages.find((p) => p.slug === slug);
 }

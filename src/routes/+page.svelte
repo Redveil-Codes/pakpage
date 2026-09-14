@@ -1,16 +1,29 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { searchPackages } from '$lib/data';
+	import { searchPackages } from '$lib/search';
 	import { fly, scale } from 'svelte/transition';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
+	const PAGE_SIZE = 12;
+
 	let query = $state(browser ? (new URLSearchParams(location.search).get('q') ?? '') : '');
 	let inputEl: HTMLInputElement;
 	let openDepsFor = $state<string | null>(null);
+	let page = $state(1);
 
-	let results = $derived(query.trim() ? searchPackages(query) : data.packages);
+	let results = $derived(query.trim() ? searchPackages(data.packages, query) : data.packages);
+	let totalPages = $derived(Math.max(1, Math.ceil(results.length / PAGE_SIZE)));
+	let pageClamped = $derived(Math.min(page, totalPages));
+	let pageItems = $derived(
+		results.slice((pageClamped - 1) * PAGE_SIZE, pageClamped * PAGE_SIZE)
+	);
+
+	$effect(() => {
+		results;
+		page = 1;
+	});
 
 	function onInput() {
 		const url = new URL(location.href);
@@ -61,6 +74,7 @@
 
 <svelte:head>
 	<title>PakPage</title>
+	<link rel="stylesheet" href="/css/home.css" />
 </svelte:head>
 
 <svelte:window onkeydown={onKeydown} onclick={onWindowClick} />
@@ -100,7 +114,7 @@ pak = = show installed packages</pre>
 <div class="count">{results.length} package{results.length === 1 ? '' : 's'}</div>
 
 <ul class="results">
-	{#each results as pkg, i (pkg.slug)}
+	{#each pageItems as pkg, i (pkg.slug)}
 		<li in:fly={{ y: 6, duration: 180, delay: Math.min(i * 20, 180) }}>
 			<a class="card-link" href="/p/{pkg.slug}" aria-label={pkg.name}></a>
 			<div class="card-body">
@@ -139,223 +153,12 @@ pak = = show installed packages</pre>
 	{/each}
 </ul>
 
-<style>
-	.intro {
-		margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
-	}
-
-	h1 {
-		font-size: clamp(1.6rem, 4vw, 2.1rem);
-		margin: 0 0 0.75rem;
-	}
-
-	.intro p {
-		color: var(--text-dim);
-		max-width: 60ch;
-	}
-
-	.search {
-		position: relative;
-		margin-bottom: 0.6rem;
-	}
-
-	.search .icon {
-		position: absolute;
-		left: 0.85rem;
-		top: 50%;
-		transform: translateY(-50%);
-		color: var(--text-dimmer);
-		pointer-events: none;
-	}
-
-	.search input {
-		width: 100%;
-		padding-left: 2.5rem;
-		padding-right: 2.5rem;
-	}
-
-	.search kbd {
-		position: absolute;
-		right: 0.7rem;
-		top: 50%;
-		transform: translateY(-50%);
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		padding: 0.1rem 0.4rem;
-		font-size: 0.75rem;
-		color: var(--text-dim);
-		pointer-events: none;
-	}
-
-	.hints {
-		display: flex;
-		gap: 1rem;
-		flex-wrap: wrap;
-		margin-bottom: 1.1rem;
-		font-size: 0.78rem;
-		color: var(--text-dimmer);
-	}
-
-	.hints kbd {
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		padding: 0.05rem 0.35rem;
-		margin-right: 0.3rem;
-		color: var(--text-dim);
-	}
-
-	.count {
-		color: var(--text-dimmer);
-		font-size: 0.8rem;
-		margin-bottom: 1.25rem;
-	}
-
-	.results {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-		gap: 0.75rem;
-	}
-
-	.results li {
-		position: relative;
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		background: var(--bg-card);
-		transition:
-			border-color 0.18s var(--ease),
-			transform 0.18s var(--ease),
-			box-shadow 0.18s var(--ease);
-	}
-
-	.results li:not(.empty):hover {
-		border-color: var(--border-hover);
-		transform: translateY(-2px);
-		box-shadow: 0 8px 24px -12px color-mix(in srgb, var(--ctp-crust) 80%, transparent);
-	}
-
-	.results li.empty {
-		color: var(--text-dim);
-		background: none;
-		border-style: dashed;
-		grid-column: 1 / -1;
-		padding: 0.95rem 1.1rem;
-	}
-
-	.card-link {
-		position: absolute;
-		inset: 0;
-		z-index: 1;
-	}
-
-	.card-body {
-		position: relative;
-		z-index: 2;
-		padding: 0.95rem 1.1rem;
-		pointer-events: none;
-	}
-
-	.row {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		gap: 0.5rem;
-		font-weight: 600;
-	}
-
-	.results li:hover .name {
-		color: var(--accent);
-	}
-
-	.name {
-		color: var(--text);
-		transition: color 0.15s var(--ease);
-	}
-
-	.version {
-		color: var(--accent);
-		font-weight: 400;
-		font-size: 0.85rem;
-		white-space: nowrap;
-	}
-
-	.results p {
-		margin: 0.4rem 0 0;
-		color: var(--text-dim);
-		font-size: 0.9rem;
-	}
-
-	.tags {
-		display: flex;
-		gap: 0.4rem;
-		margin-top: 0.6rem;
-		flex-wrap: wrap;
-	}
-
-	.tag {
-		position: relative;
-		z-index: 3;
-		pointer-events: auto;
-		font-family: inherit;
-		font-size: 0.72rem;
-		color: var(--text-dim);
-		background: var(--bg-raised);
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		padding: 0.15rem 0.45rem;
-		cursor: pointer;
-		transition:
-			border-color 0.15s var(--ease),
-			color 0.15s var(--ease);
-	}
-
-	.tag:hover {
-		border-color: var(--accent-dim);
-		color: var(--accent);
-	}
-
-	.dep-wrap {
-		position: relative;
-		z-index: 3;
-		pointer-events: auto;
-	}
-
-	.dep-menu {
-		position: absolute;
-		top: calc(100% + 6px);
-		left: 0;
-		z-index: 4;
-		display: flex;
-		flex-direction: column;
-		gap: 0.15rem;
-		min-width: 140px;
-		background: var(--bg-raised);
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		padding: 0.35rem;
-		box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--ctp-crust) 90%, transparent);
-		transform-origin: top left;
-	}
-
-	.dep-menu button {
-		font-family: inherit;
-		text-align: left;
-		font-size: 0.78rem;
-		color: var(--text-dim);
-		background: none;
-		border: none;
-		border-radius: 5px;
-		padding: 0.3rem 0.5rem;
-		cursor: pointer;
-		transition:
-			background 0.12s var(--ease),
-			color 0.12s var(--ease);
-	}
-
-	.dep-menu button:hover {
-		background: var(--bg-card);
-		color: var(--accent);
-	}
-</style>
+{#if totalPages > 1}
+	<div class="pager">
+		<button disabled={pageClamped <= 1} onclick={() => (page = pageClamped - 1)}>&larr; prev</button>
+		<span class="pos">page {pageClamped} / {totalPages}</span>
+		<button disabled={pageClamped >= totalPages} onclick={() => (page = pageClamped + 1)}
+			>next &rarr;</button
+		>
+	</div>
+{/if}

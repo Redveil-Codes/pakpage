@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
@@ -11,11 +11,7 @@ export default defineConfig({
 			},
 
 			adapter: adapter({
-				pages: 'build',
-				assets: 'build',
-				fallback: undefined,
-				precompress: false,
-				strict: true
+				runtime: 'nodejs22.x'
 			})
 		})
 	]

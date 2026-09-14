@@ -1,0 +1,13 @@
+.intro {
+	margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.intro h1 {
+	font-size: clamp(1.6rem, 4vw, 2.1rem);
+	margin: 0 0 0.75rem;
+}
+
+.intro p {
+	color: var(--text-dim);
+	max-width: 60ch;
+}

@@ -12,7 +12,7 @@
 
 <section class="intro">
 	<h1>contributors</h1>
-	<p>the people behind pak. add yourself: <code>contributors/&lt;slug&gt;/bio.md</code>.</p>
+	<p>the people behind Pak.</p>
 </section>
 
 <ul class="contrib-grid">
@@ -35,28 +35,3 @@
 		<li class="empty">no contributors yet</li>
 	{/each}
 </ul>
-
-<style>
-	.intro {
-		margin-bottom: clamp(1.5rem, 4vw, 2.25rem);
-	}
-
-	h1 {
-		font-size: clamp(1.6rem, 4vw, 2.1rem);
-		margin: 0 0 0.75rem;
-	}
-
-	.intro p {
-		color: var(--text-dim);
-		max-width: 60ch;
-	}
-
-	.empty {
-		color: var(--text-dim);
-		border: 1px dashed var(--border);
-		border-radius: 10px;
-		padding: 0.95rem 1.1rem;
-		grid-column: 1 / -1;
-		list-style: none;
-	}
-</style>
