@@ -1,0 +1,61 @@
+:root {
+	color-scheme: dark;
+	--bg: #0d0f12;
+	--bg-raised: #15181d;
+	--border: #262b33;
+	--text: #e4e7eb;
+	--text-dim: #8b93a1;
+	--accent: #7ee787;
+	--accent-dim: #3fb950;
+	--mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--mono);
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+code,
+pre {
+	font-family: var(--mono);
+}
+
+pre {
+	background: var(--bg-raised);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 0.75rem 1rem;
+	overflow-x: auto;
+}
+
+input {
+	font-family: inherit;
+	font-size: inherit;
+	color: inherit;
+	background: var(--bg-raised);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 0.6rem 0.8rem;
+}
+
+input:focus {
+	outline: 1px solid var(--accent-dim);
+	border-color: var(--accent-dim);
+}
